@@ -1,0 +1,80 @@
+# =============================================================================
+# NGINX Proxy Manager - Production (Pre-built GHCR image, host edge)
+# =============================================================================
+# Usage: docker compose -f docker-compose.production.yml up -d
+#
+# Pulls OUR published edition image and runs NPM directly on the host as the edge
+# reverse proxy. SQLite is embedded (no external DB). HTTP/1.1 + HTTP/2 + HTTP/3
+# (QUIC over UDP/443) are all served.
+#
+# Access:
+#   - Public sites  http://<host>  /  https://<host>   (your proxied backends)
+#   - Admin web UI  http://<host>:${PORT_ADMIN:-8080}
+#
+# First start: open the admin UI and sign in with the default account, then
+# change it immediately (you are forced to):
+#   Email: admin@example.com   Password: changeme
+#
+# Firewall: HTTP/3 needs inbound UDP/443 open in addition to TCP/80 + TCP/443.
+# =============================================================================
+
+
+### Service Templates ###
+x-npm-common: &npm-common
+  image: ${NGINX_PROXY_MANAGER_IMAGE:-ghcr.io/bauer-group/cs-nginxproxy/nginx-proxy-manager}:${NGINX_PROXY_MANAGER_IMAGE_VERSION:-latest}
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
+  environment:
+    - TZ=${TIME_ZONE:-Etc/UTC}
+    - NPM_HTTP3_ENABLE=${NPM_HTTP3_ENABLE:-true}
+    - DISABLE_IPV6=${DISABLE_IPV6:-false}
+    - DB_SQLITE_FILE=${DB_SQLITE_FILE:-/data/database.sqlite}
+    # Optional one-time admin provisioning (else the first-run setup wizard is
+    # used). Uncomment BOTH and set them in .env to enable. Treat as secrets.
+    # - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-}
+    # - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-}
+  healthcheck:
+    # Bundled checker hits the local admin API on :81. start_period absorbs the
+    # first-boot DB init; interval/retries govern steady-state detection.
+    test: ["CMD", "/usr/bin/check-health"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 120s
+
+
+services:
+### NGINX Proxy Manager ###
+  nginx-proxy-manager:
+    <<: *npm-common
+    container_name: ${STACK_NAME:-nginx-proxy-manager}_SERVER
+    ports:
+      # <host-port>:<container-port>
+      - "${PORT_HTTP:-80}:80"          # Public HTTP
+      - "${PORT_HTTPS:-443}:443"       # Public HTTPS (HTTP/1.1 + HTTP/2)
+      - "${PORT_HTTPS:-443}:443/udp"   # Public HTTPS (HTTP/3 / QUIC)
+      - "${PORT_ADMIN:-8080}:81"       # Admin web UI (plain HTTP)
+      # Security: the admin UI is plain HTTP. For production, prefer binding it to
+      # a trusted interface only — replace the line above with, e.g.:
+      # - "127.0.0.1:${PORT_ADMIN:-8080}:81"
+      #
+      # Extra stream (TCP/UDP) forwards configured in the UI must be published too:
+      # - "21:21"        # FTP (TCP stream example)
+      # - "53:53/udp"    # DNS (UDP stream example)
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+
+
+### Volumes ###
+volumes:
+  npm-data:
+    driver: local
+    name: ${STACK_NAME:-nginx-proxy-manager}-data
+  npm-letsencrypt:
+    driver: local
+    name: ${STACK_NAME:-nginx-proxy-manager}-letsencrypt

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bauer-group/automation-templates/main/.github/config/docker-base-image-monitor/docker-base-images.schema.json",
+  "_description": "CS-NGINXProxy stack — the UPSTREAM base image consumed via src/nginx-proxy-manager/Dockerfile. The monitor tracks its digest and triggers a release when it moves. It MUST NOT track this repo's own published image (ghcr.io/bauer-group/cs-nginxproxy/nginx-proxy-manager): doing so would loop — a release republishes it, its digest moves, the monitor fires again, forever.",
+  "images": [
+    {
+      "name": "nginx-proxy-manager",
+      "image": "jc21/nginx-proxy-manager",
+      "tag": "2",
+      "variable": "NPM_DIGEST",
+      "description": "Nginx Proxy Manager base image, floating 2.x (src/nginx-proxy-manager/Dockerfile)"
+    }
+  ],
+  "settings": {
+    "commit-prefix": "chore(deps)",
+    "auto-create-variables": true
+  }
+}

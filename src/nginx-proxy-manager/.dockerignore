@@ -1,0 +1,7 @@
+# =============================================================================
+# Docker Ignore - Image Build Context (src/nginx-proxy-manager)
+# =============================================================================
+# Only the Dockerfile and the two scripts are needed to build the image.
+
+README.md
+*.md

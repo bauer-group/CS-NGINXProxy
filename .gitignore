@@ -1,0 +1,37 @@
+# =============================================================================
+# Git Ignore Configuration
+# =============================================================================
+
+# Environment (may contain hostnames / deployment-specific values)
+.env
+.env.*
+.env.bak
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.code-workspace
+.history/
+
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*~
+
+# Local NPM runtime state (only ever created by accident — the real data lives
+# in the named Docker volumes, never in the repo)
+data/
+letsencrypt/

@@ -1,0 +1,58 @@
+# =============================================================================
+# Dependabot Configuration
+# =============================================================================
+# Watches:
+#   1. GitHub Actions versions (workflows pinned to @main pull module updates)
+#   2. Image references inside docker-compose*.yml files
+#   3. Base image in src/nginx-proxy-manager/Dockerfile
+#
+# Pure digest drift on the existing tag is handled by check-base-images.yml
+# (daily cron); this surfaces tag bumps and version updates as PRs.
+# =============================================================================
+
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(ci)"
+
+  # Docker Compose images
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # nginx-proxy-manager base image (jc21/nginx-proxy-manager in src/nginx-proxy-manager/Dockerfile)
+  - package-ecosystem: "docker"
+    directory: "/src/nginx-proxy-manager"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(docker)"

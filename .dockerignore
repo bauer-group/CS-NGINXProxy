@@ -1,0 +1,31 @@
+# =============================================================================
+# Docker Ignore - Root Level
+# =============================================================================
+# The image is built from ./src/nginx-proxy-manager (see its own .dockerignore).
+# This root file guards against an accidental root-context build pulling in repo
+# meta or local runtime state.
+
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+.claude
+.DS_Store
+Thumbs.db
+
+*.md
+LICENSE
+CHANGELOG.md
+
+.env
+.env.*
+!.env.example
+
+docker-compose*.yml
+docs
+
+# Local runtime state (named volumes hold the real data)
+data
+letsencrypt
