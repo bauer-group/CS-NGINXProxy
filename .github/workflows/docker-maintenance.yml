@@ -1,12 +1,13 @@
 # =============================================================================
 # Docker Maintenance — Auto-merge Dependabot PRs
 # =============================================================================
-# Decides on every Dependabot PR, whatever its ecosystem: a patch update
-# merges only after docker-release.yml ran on the PR and passed (it builds
-# the image from src/nginx-proxy-manager/); everything else stays open with
-# an annotation. The merge is made with GITHUB_TOKEN, so it starts no push
-# workflow: the release follows with the next push to main or a manual run
-# of docker-release.yml.
+# Decides on every Dependabot PR, whatever its ecosystem: a patch or minor
+# update merges only after docker-release.yml ran on the PR and passed (it
+# builds the image from src/nginx-proxy-manager/); a major update (a 0.x
+# minor counts as major) and everything else stay open with an annotation.
+# The merge is made with GITHUB_TOKEN, so it starts no push workflow: the
+# release follows with the next push to main or a manual run of
+# docker-release.yml.
 # =============================================================================
 
 name: 🔧 Docker Maintenance
