@@ -54,25 +54,64 @@ jobs:
       severity: 'error'
 
   # ============================================
-  # Release Job (only on main branch push)
+  # Build Gate (every event - nothing is pushed)
   # ============================================
+  # Builds the image from this run's commit before anything is released: on
+  # a PR it is the CI docker-maintenance.yml waits for, on a push or a
+  # dispatch (the release after a Dependabot merge) it keeps a commit whose
+  # image does not build from being tagged as a version without an image.
+
+  docker-build-nginx-proxy-manager-validate:
+    name: 🔨 Validate nginx-proxy-manager Build
+    needs: [validate-compose, validate-scripts]
+    if: |
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-NGINXProxy/nginx-proxy-manager'
+
+      auto-tags: true
+      dockerfile-path: './src/nginx-proxy-manager/Dockerfile'
+      docker-context: './src/nginx-proxy-manager'
+      platforms: 'linux/amd64'
+
+      push: false
+
+      security-scan: false
+      security-fail-on: 'CRITICAL'
+    secrets: inherit
+
+  # ============================================
+  # Release Job (push / dispatch, after the gate)
+  # ============================================
+  # semantic-release publishes from main only (branches: main), so a dispatch
+  # on any other branch releases nothing and the publish job is skipped.
 
   release:
     name: 📦 Create Semantic Release
-    needs: [validate-compose, validate-scripts]
+    needs: [validate-compose, validate-scripts, docker-build-nginx-proxy-manager-validate]
     if: |
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       needs.validate-compose.result == 'success' &&
-      needs.validate-scripts.result == 'success'
+      needs.validate-scripts.result == 'success' &&
+      needs.docker-build-nginx-proxy-manager-validate.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
     with:
       target-branch: 'main'
+      # Release the commit this run validated and built - the image job below
+      # builds it too. Without it the release takes the tip of main when it
+      # starts: a push that landed during the gate would be released untested
+      # and missing from the image. Pinned, semantic-release publishes nothing
+      # once main has moved on, and the run for the newer main releases both.
+      ref: ${{ github.sha }}
       dry-run: false
       force-release: ${{ inputs.force-release || false }}
     secrets: inherit
 
   # ============================================
-  # Docker Build & Push (nginx-proxy-manager image)
+  # Docker Build & Push (nginx-proxy-manager image, only after a release)
   # ============================================
 
   docker-build-nginx-proxy-manager-release:
@@ -103,27 +142,4 @@ jobs:
       security-fail-on: 'CRITICAL'
       generate-sbom: true
       sync-dockerhub-readme: true
-    secrets: inherit
-
-  docker-build-nginx-proxy-manager-pr:
-    name: 🔨 Validate nginx-proxy-manager Build (PR)
-    needs: [validate-compose, validate-scripts]
-    if: |
-      github.event_name == 'pull_request' &&
-      needs.validate-compose.result == 'success' &&
-      needs.validate-scripts.result == 'success'
-    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
-    with:
-      publish-to: 'ghcr'
-      ghcr-image-name: 'bauer-group/CS-NGINXProxy/nginx-proxy-manager'
-
-      auto-tags: true
-      dockerfile-path: './src/nginx-proxy-manager/Dockerfile'
-      docker-context: './src/nginx-proxy-manager'
-      platforms: 'linux/amd64'
-
-      push: false
-
-      security-scan: false
-      security-fail-on: 'CRITICAL'
     secrets: inherit

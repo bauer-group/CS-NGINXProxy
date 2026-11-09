@@ -5,9 +5,13 @@
 # update merges only after docker-release.yml ran on the PR and passed (it
 # builds the image from src/nginx-proxy-manager/); a major update (a 0.x
 # minor counts as major) and everything else stay open with an annotation.
-# The merge is made with GITHUB_TOKEN, so it starts no push workflow: the
-# release follows with the next push to main or a manual run of
-# docker-release.yml.
+# The merge is made with the GITHUB_TOKEN, which starts no push workflow, so
+# after a merge this workflow dispatches docker-release.yml on main
+# (release-workflow) and waits for it; a release run that does not succeed
+# turns this job red. That run:
+# 1. Validates compose and builds the image again from the merged main
+# 2. Creates a semantic release (fix(docker) -> PATCH) of the tested commit
+# 3. Builds and pushes the new Docker image - only if released
 # =============================================================================
 
 name: 🔧 Docker Maintenance
@@ -21,8 +25,11 @@ on:
     # and changes under .github/ always stay open for review.
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write       # merge
+  pull-requests: write  # approve, read the PR
+  checks: read          # check runs and suites
+  statuses: read        # commit statuses
+  actions: write        # dispatch the release; read workflow runs
 
 jobs:
   maintenance:
@@ -35,4 +42,8 @@ jobs:
       # builds the image. A PR outside its pull_request paths stays open
       # (not tested).
       required-workflows: '.github/workflows/docker-release.yml'
+      # A merge made with the GITHUB_TOKEN starts no push workflow: dispatch
+      # the release on main after a merge and fail this job if it does not
+      # succeed (release-wait-minutes, default 60).
+      release-workflow: '.github/workflows/docker-release.yml'
     secrets: inherit
