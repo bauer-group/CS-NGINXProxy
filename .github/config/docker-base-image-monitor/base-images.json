@@ -5,7 +5,7 @@
     {
       "name": "nginx-proxy-manager",
       "image": "jc21/nginx-proxy-manager",
-      "tag": "2",
+      "dockerfile": "src/nginx-proxy-manager/Dockerfile",
       "variable": "NPM_DIGEST",
       "description": "Nginx Proxy Manager base image, floating 2.x (src/nginx-proxy-manager/Dockerfile)"
     }
