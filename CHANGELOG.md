@@ -4,6 +4,13 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.1.4](https://github.com/bauer-group/CS-NGINXProxy/compare/v0.1.3...v0.1.4) (2026-11-20)
+
+### 🔧 Maintenance
+
+* **deps:** update base image nginx-proxy-manager [skip ci] ([bb990d7](https://github.com/bauer-group/CS-NGINXProxy/commit/bb990d706f36bcf580d444ec3fc2e1f168ca1c19))
+* update Dockerfile version to 0.1.3 ([89012d5](https://github.com/bauer-group/CS-NGINXProxy/commit/89012d56bd3c63facb48bf2c571d950571d4027a))
+
 ## [0.1.3](https://github.com/bauer-group/CS-NGINXProxy/compare/v0.1.2...v0.1.3) (2026-11-13)
 
 ### 🔧 Maintenance
